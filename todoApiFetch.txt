@@ -1,0 +1,76 @@
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { Todo } from "./component/todo";
+interface Values {
+  id: number;
+  name: string;
+}
+
+const Get = "http://localhost:8080/items";
+const Add = "http://localhost:8080/add";
+const Delete= "http://localhost:8080/delete";
+
+function App() {
+  const [tasks, setTasks] = useState<Values[]>([]);
+  const [newTask, setNewTask] = useState("");
+
+
+  useEffect(() => {
+    const fetchTodos = async () => {
+      try {
+        const response = await axios.get(Get);
+        setTasks(response.data);
+      } catch (error) {
+        console.error("Error while fetching", error);
+      }
+    };
+    fetchTodos();
+  }, []);
+
+ 
+  const addTodo = async () => {
+    if (!newTask.trim()) return; 
+    try {
+      const response = await axios.post(Add, { name: newTask });
+      setTasks((prevTasks) => [...prevTasks, response.data]);
+      setNewTask("");
+    } catch (error) {
+      console.error("Error while adding data", error);
+    }
+  };
+
+  const removeTodo = async (id: number) => {
+    try {
+      await axios.delete(`${Delete}/${id}`);
+      setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+    } catch (error) {
+      console.error("Error while deleting data", error);
+    }
+  };
+
+  return (
+    <div className="App">
+      <input type="text" placeholder="Add an Item" value={newTask} style={{ padding: "3px" }} onChange={(e) => setNewTask(e.target.value)}/>
+      <button onClick={addTodo} style={{ padding: "3px", marginLeft: "10px" }}>Add</button>
+      <Todo tasks={tasks} removeTodo={removeTodo} />
+    </div>
+  );
+}
+
+export default App;
+___________________________________________________________
+Child Component
+
+
+export const Todo = (props:{tasks:any, removeTodo(id:number) :void }) => {
+    return (
+      <>
+        {props.tasks.map((task:any) => (
+          <p key={task.id}>
+            {task.name}{" "}
+            <button onClick={() => props.removeTodo(task.id)}>Remove Todo</button>
+          </p>
+        ))}
+      </>
+    );
+  };
